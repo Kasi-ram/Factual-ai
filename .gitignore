@@ -1,0 +1,29 @@
+# Environments
+.env
+.env.local
+.env.*
+
+# Python virtual environment
+.venv/
+env/
+ENV/
+venv/
+
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ChromaDB local database storage
+chroma_db/
+
+# Streamlit local configurations (optional, but good to keep clean unless shared)
+# We will keep config.toml tracked so the theme is distributed, but ignore secrets
+# .streamlit/
+
+# OS-specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+.DS_Store
