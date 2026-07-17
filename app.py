@@ -7,6 +7,9 @@ allowing users to upload text, markdown, HTML, CSV, JSON, and PDF documents,
 manage active knowledge bases, and ask questions grounded in the uploaded files.
 """
 
+import dotenv
+dotenv.load_dotenv()
+
 import uuid
 import streamlit as st
 from services.langgraph_agent import LangGraphAgent
