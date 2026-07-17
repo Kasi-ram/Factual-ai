@@ -20,7 +20,7 @@ graph TD
 ```
 
 1. **Planner Node**: Analyzes the query using DeepSeek-V3 in JSON mode to classify the intent. If it requires document lookups, it extracts a standalone search query.
-2. **Knowledge Node**: Generates query vector embeddings using Google Gemini, performs a cosine-similarity search inside ChromaDB, and passes matching evidence to generate a grounded response.
+2. **Knowledge Node**: Generates query vector embeddings using the configured Embedding Service, performs a cosine-similarity search inside ChromaDB, and passes matching evidence to generate a grounded response.
 3. **General Node**: Processes casual greetings and capabilities questions. Factual queries that failed retrieval are rejected here with a strict guardrail message: `"I could not find this information in the available knowledge base."`
 4. **Final Answer Node**: Compiles the final answer, updates conversational thread history (using memory checkpointers), and prepares citation metadata.
 
@@ -31,7 +31,7 @@ graph TD
 - **Frontend UI**: [Streamlit](https://streamlit.io/) (enhanced dark-theme, responsive cards, interactive state metrics)
 - **Agent Orchestration**: [LangGraph](https://langchain-ai.github.io/langgraph/) (state graphs with `InMemorySaver` memory checkpointing)
 - **Vector DB**: [ChromaDB](https://www.trychroma.com/) (using Cosine similarity space metric)
-- **Embedding API**: [Google Gemini Embeddings](https://ai.google.dev/) (`gemini-embedding-001`)
+- **Embedding API**: OpenAI-compatible Embeddings API (such as GenAILab, OpenAI, or Groq)
 - **LLM Engine**: [DeepSeek-V3](https://github.com/deepseek-ai/DeepSeek-V3) (hosted via TCS GenAILab endpoint)
 - **Document Parsing**: [PyPDF](https://pypi.org/project/pypdf/) & Python standard text-processing
 
