@@ -75,11 +75,15 @@ cd Factual-ai
 ### 2. Configure Environment
 Create a `.env` file in the root directory:
 ```ini
+# LLM Configuration
 LLM_BASE_URL=https://genailab.tcs.in
 LLM_API_KEY=your_genailab_api_key
 LLM_MODEL=azure_ai/genailab-maas-DeepSeek-V3-0324
-GEMINI_API_KEY=your_gemini_api_key
-EMBEDDING_MODEL=gemini-embedding-001
+
+# Embedding Configuration (Falls back to LLM values if omitted)
+EMBEDDING_BASE_URL=https://genailab.tcs.in
+EMBEDDING_API_KEY=your_genailab_api_key
+EMBEDDING_MODEL=azure_ai/genailab-maas-text-embedding-3-small
 ```
 
 ### 3. Create & Activate Virtual Environment
