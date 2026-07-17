@@ -12,7 +12,7 @@ from typing import TypedDict
 from langgraph.graph import StateGraph, START, END
 from langgraph.checkpoint.memory import InMemorySaver
 from services.llm_service import LLMService
-from tools.knowledge_tool import KnowledgeTool
+from services.rag_service import RAGService
 
 class AgentState(TypedDict):
     """
@@ -35,7 +35,7 @@ class LangGraphAgent:
 
     def __init__(self):
         self.llm = LLMService()
-        self.knowledge_tool = KnowledgeTool()
+        self.rag_service = RAGService()
 
         # Initialize the state graph
         graph = StateGraph(AgentState)
@@ -157,7 +157,7 @@ CURRENT QUESTION:
         """
         Invokes similarity retrieval and compiles answers from document evidence.
         """
-        result = self.knowledge_tool.execute(
+        result = self.rag_service.ask(
             state["knowledge_query"],
             state.get("knowledge_base_id", "default")
         )

@@ -10,7 +10,6 @@ import os
 from services.embedding_service import EmbeddingService
 from services.chroma_service import ChromaService
 from services.llm_service import LLMService
-from services.evidence_service import EvidenceService
 
 class RAGService:
     """
@@ -23,7 +22,6 @@ class RAGService:
         self.embedding_service = EmbeddingService()
         self.chroma_service = ChromaService()
         self.llm_service = LLMService()
-        self.evidence_service = EvidenceService()
 
         # Retrieve and parse maximum allowed semantic retrieval distance
         configured_distance = os.getenv("RAG_MAX_DISTANCE")
@@ -89,7 +87,7 @@ class RAGService:
             }
 
         # Step 3: Evidence Selection (top chunks)
-        evidence = self.evidence_service.select(question, results)
+        evidence = results[:3]
 
         if not evidence:
             return {

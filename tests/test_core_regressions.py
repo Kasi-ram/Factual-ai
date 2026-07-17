@@ -23,10 +23,10 @@ class FakeLLMService:
     def ask(self, prompt):
         return "general chitchat answer"
 
-class FakeKnowledgeTool:
+class FakeRAGService:
     calls = []
 
-    def execute(self, question, knowledge_base_id="default"):
+    def ask(self, question, knowledge_base_id="default"):
         self.calls.append((question, knowledge_base_id))
         return {
             "answer": "knowledge search answer",
@@ -40,7 +40,7 @@ def install_agent_stubs():
     """
     for module_name, class_name, value in [
         ("services.llm_service", "LLMService", FakeLLMService),
-        ("tools.knowledge_tool", "KnowledgeTool", FakeKnowledgeTool)
+        ("services.rag_service", "RAGService", FakeRAGService)
     ]:
         module = types.ModuleType(module_name)
         setattr(module, class_name, value)
@@ -83,7 +83,7 @@ class LangGraphAgentTests(unittest.TestCase):
     """
 
     def setUp(self):
-        FakeKnowledgeTool.calls.clear()
+        FakeRAGService.calls.clear()
         self.agent = LangGraphAgent()
 
     def test_checkpoint_memory_is_retained(self):
@@ -106,7 +106,7 @@ class LangGraphAgentTests(unittest.TestCase):
         )
 
         self.assertEqual(
-            FakeKnowledgeTool.calls,
+            FakeRAGService.calls,
             [("policy", "tenant-x")]
         )
 

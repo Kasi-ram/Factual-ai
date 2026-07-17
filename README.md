@@ -53,14 +53,11 @@ Factual-ai/
 │   ├── document_processor.py          # Processing routing (PDF/Txt/Md...)
 │   ├── document_registry.py           # Document session registry metadata
 │   ├── embedding_service.py           # Google Gemini vector generation
-│   ├── evidence_service.py            # Answer generator based on chunks
 │   ├── langgraph_agent.py             # LangGraph state machine & logic
 │   ├── llm_service.py                 # DeepSeek-V3 model completions API
 │   ├── pdf_service.py                 # PDF parsing utility
 │   ├── rag_service.py                 # RAG coordinate interface
 │   └── text_service.py                # Text/HTML/JSON parsing utility
-├── tools/                # Agent tools definition
-│   └── knowledge_tool.py              # Vector store query tool
 └── tests/                # Automated unit & integration tests
     └── test_core_regressions.py       # Regression test suite using unittest
 ```
