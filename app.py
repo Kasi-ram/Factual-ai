@@ -56,6 +56,17 @@ st.markdown("""
         border: 1px solid #334155;
         margin-bottom: 10px;
     }
+
+    /* Style the error cards */
+    .error-card {
+        padding: 20px;
+        border-radius: 12px;
+        background-color: #2a1215;
+        border: 1px solid #7f1d1d;
+        color: #fca5a5;
+        margin-bottom: 15px;
+        font-family: 'Inter', sans-serif;
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -93,7 +104,10 @@ st.caption("Professional General-Genre Knowledge Assistant")
 # 6. Render Chat Messages History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+        if message.get("is_html"):
+            st.markdown(message["content"], unsafe_allow_html=True)
+        else:
+            st.markdown(message["content"])
         
         # Display citation sources if present
         if message.get("sources"):
@@ -128,31 +142,70 @@ if question:
                 "final_answer": "Preparing final answer..."
             }
 
-            # Run stream execution
-            for event in agent.stream(
-                question,
-                thread_id=st.session_state.thread_id,
-                knowledge_base_id=st.session_state.knowledge_base_id
-            ):
-                if event["type"] == "node":
-                    node_name = event["node"]
-                    msg = node_messages.get(node_name)
-                    if msg:
-                        st.write(msg)
-                elif event["type"] == "result":
-                    response = {
-                        "answer": event["answer"],
-                        "sources": event["sources"]
-                    }
+            try:
+                # Run stream execution
+                for event in agent.stream(
+                    question,
+                    thread_id=st.session_state.thread_id,
+                    knowledge_base_id=st.session_state.knowledge_base_id
+                ):
+                    if event["type"] == "node":
+                        node_name = event["node"]
+                        msg = node_messages.get(node_name)
+                        if msg:
+                            st.write(msg)
+                    elif event["type"] == "result":
+                        response = {
+                            "answer": event["answer"],
+                            "sources": event["sources"]
+                        }
 
-            status.update(
-                label="Completed",
-                state="complete",
-                expanded=False
-            )
+                status.update(
+                    label="Completed",
+                    state="complete",
+                    expanded=False
+                )
+            except Exception as e:
+                status.update(
+                    label="Execution Failed",
+                    state="error",
+                    expanded=False
+                )
+                
+                error_title = type(e).__name__
+                error_msg = str(e)
+                
+                # Check for common error types to display friendly hints
+                hint = "Please check your network connection and retry. If the problem persists, contact your systems administrator."
+                if "api key" in error_msg.lower() or "api_key" in error_msg.lower():
+                    hint = "A missing or invalid API key was detected. Please verify the `LLM_API_KEY` and `GEMINI_API_KEY` configurations in your local `.env` file."
+                elif "quota" in error_msg.lower() or "limit" in error_msg.lower():
+                    hint = "The service rate limits or API quotas have been exceeded. Please wait a short while before trying again."
+                
+                # Generate styled HTML error card
+                error_html = f"""
+                <div class="error-card">
+                    <h4 style="margin: 0 0 10px 0; color: #fecaca; font-family: 'Inter', sans-serif;">⚠️ Factual-ai Execution Error</h4>
+                    <p style="margin: 0 0 8px 0; font-size: 14px;">An unexpected error occurred while compiling your request.</p>
+                    <ul style="margin: 0 0 12px 0; padding-left: 20px; font-size: 13px;">
+                        <li><b>Error Category:</b> <code>{error_title}</code></li>
+                        <li><b>System Message:</b> <i>{error_msg}</i></li>
+                    </ul>
+                    <hr style="border: 0; border-top: 1px solid #7f1d1d; margin: 10px 0;" />
+                    <span style="font-size: 13px; color: #fca5a5;"><b>Troubleshooting Advice:</b> {hint}</span>
+                </div>
+                """
+                response = {
+                    "answer": error_html,
+                    "sources": [],
+                    "is_html": True
+                }
 
         # Output final compiled answer
-        st.markdown(response["answer"])
+        if response.get("is_html"):
+            st.markdown(response["answer"], unsafe_allow_html=True)
+        else:
+            st.markdown(response["answer"])
 
         # Display citations
         if response["sources"]:
@@ -165,7 +218,8 @@ if question:
         {
             "role": "assistant",
             "content": response["answer"],
-            "sources": response["sources"]
+            "sources": response["sources"],
+            "is_html": response.get("is_html", False)
         }
     )
 
