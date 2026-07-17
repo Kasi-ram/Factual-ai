@@ -28,7 +28,7 @@ class RAGService:
         if configured_distance:
             self.max_distance = float(configured_distance)
         elif self.chroma_service.distance_metric() == "cosine":
-            self.max_distance = 0.35
+            self.max_distance = 0.45
         else:
             # L2 distance cutoff
             self.max_distance = 1.0
