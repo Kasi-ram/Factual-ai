@@ -68,7 +68,7 @@ class RAGService:
             knowledge_base_id: Session-specific database namespace.
             
         Returns:
-            A dict containing 'answer', 'sources', and 'found'.
+            A dict containing 'answer', 'sources', 'found', 'confidence', 'confidence_score', and 'evidence'.
         """
         # Step 1: Semantic Retrieve from Chroma
         results = self.retrieve(question, knowledge_base_id)
@@ -79,11 +79,25 @@ class RAGService:
             if r["distance"] <= self.max_distance
         ]
 
+        # De-duplicate chunks based on text contents (whitespace-normalized, case-insensitive)
+        seen_texts = set()
+        deduped_results = []
+        for r in results:
+            text_normalized = " ".join(r["document"].lower().split())
+            if text_normalized not in seen_texts:
+                seen_texts.add(text_normalized)
+                deduped_results.append(r)
+        results = deduped_results
+
+        # Retrieval Guardrail: Return early if no relevant evidence is found
         if not results:
             return {
-                "answer": self.NOT_FOUND,
+                "answer": "No relevant information was found in the uploaded documents.",
                 "sources": [],
-                "found": False
+                "found": False,
+                "confidence": "Low",
+                "confidence_score": 0.0,
+                "evidence": []
             }
 
         # Step 3: Evidence Selection (top chunks)
@@ -91,10 +105,24 @@ class RAGService:
 
         if not evidence:
             return {
-                "answer": self.NOT_FOUND,
+                "answer": "No relevant information was found in the uploaded documents.",
                 "sources": [],
-                "found": False
+                "found": False,
+                "confidence": "Low",
+                "confidence_score": 0.0,
+                "evidence": []
             }
+
+        # Calculate confidence level and score based on retrieval similarity metrics (1 - distance)
+        chunk_similarities = [1.0 - r["distance"] for r in evidence]
+        avg_similarity = sum(chunk_similarities) / len(chunk_similarities) if chunk_similarities else 0.0
+        
+        if len(evidence) >= 2 and any(sim >= 0.85 for sim in chunk_similarities[:2]):
+            confidence_level = "High"
+        elif len(evidence) >= 1 and any(sim >= 0.65 for sim in chunk_similarities):
+            confidence_level = "Medium"
+        else:
+            confidence_level = "Low"
 
         # Step 4: Build prompt context
         context_parts = []
@@ -140,16 +168,34 @@ ANSWER:
 """
         answer = self.llm_service.ask(prompt)
 
-        # Grounding check
+        # Grounding check (Output Guardrail)
         if self.NOT_FOUND.lower() in answer.lower():
             return {
                 "answer": self.NOT_FOUND,
                 "sources": [],
-                "found": False
+                "found": False,
+                "confidence": "Low",
+                "confidence_score": 0.0,
+                "evidence": []
             }
+
+        # Build clean output evidence structures for explainability panel
+        evidence_list = []
+        for r in evidence:
+            evidence_list.append({
+                "document": r["document"],
+                "distance": r["distance"],
+                "metadata": {
+                    "source": r["metadata"]["source"],
+                    "page": r["metadata"]["page"]
+                }
+            })
 
         return {
             "answer": answer,
             "sources": self._build_sources(evidence),
-            "found": True
+            "found": True,
+            "confidence": confidence_level,
+            "confidence_score": avg_similarity,
+            "evidence": evidence_list
         }

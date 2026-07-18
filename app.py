@@ -104,6 +104,12 @@ st.caption("Professional General-Genre Knowledge Assistant")
 # 6. Render Chat Messages History
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
+        # Display confidence badge if present
+        if message.get("confidence"):
+            color_map = {"High": "#22c55e", "Medium": "#eab308", "Low": "#ef4444"}
+            color = color_map.get(message["confidence"], "#64748b")
+            st.markdown(f'<span style="color: {color}; font-weight: bold; font-size: 13px;">● {message["confidence"]} Confidence</span>', unsafe_allow_html=True)
+
         if message.get("is_html"):
             st.markdown(message["content"], unsafe_allow_html=True)
         else:
@@ -114,6 +120,19 @@ for message in st.session_state.messages:
             st.markdown("**Sources:**")
             for source in message["sources"]:
                 st.caption(f'📄 {source["source"]} - Page {source["page"]}')
+
+        # Display expandable Evidence Panel if present
+        if message.get("evidence"):
+            with st.expander("🔍 Evidence Panel"):
+                for idx, ev in enumerate(message["evidence"], 1):
+                    sim = 1.0 - ev["distance"]
+                    st.markdown(f"""
+                    **Source {idx}:** {ev['metadata']['source']} (Page {ev['metadata']['page']})  
+                    **Confidence score:** `{sim * 100:.1f}%`  
+                    ```text
+                    {ev['document']}
+                    ```
+                    """)
 
 # 7. Chat Input Query
 question = st.chat_input("Ask a question grounded in the uploaded documents...")
@@ -157,7 +176,9 @@ if question:
                     elif event["type"] == "result":
                         response = {
                             "answer": event["answer"],
-                            "sources": event["sources"]
+                            "sources": event["sources"],
+                            "confidence": event.get("confidence"),
+                            "evidence": event.get("evidence")
                         }
 
                 status.update(
@@ -202,24 +223,44 @@ if question:
                 }
 
         # Output final compiled answer
+        if response.get("confidence"):
+            color_map = {"High": "#22c55e", "Medium": "#eab308", "Low": "#ef4444"}
+            color = color_map.get(response["confidence"], "#64748b")
+            st.markdown(f'<span style="color: {color}; font-weight: bold; font-size: 13px;">● {response["confidence"]} Confidence</span>', unsafe_allow_html=True)
+
         if response.get("is_html"):
             st.markdown(response["answer"], unsafe_allow_html=True)
         else:
             st.markdown(response["answer"])
 
         # Display citations
-        if response["sources"]:
+        if response.get("sources"):
             st.markdown("**Sources:**")
             for source in response["sources"]:
                 st.caption(f'📄 {source["source"]} - Page {source["page"]}')
+
+        # Display expandable Evidence Panel if present
+        if response.get("evidence"):
+            with st.expander("🔍 Evidence Panel"):
+                for idx, ev in enumerate(response["evidence"], 1):
+                    sim = 1.0 - ev["distance"]
+                    st.markdown(f"""
+                    **Source {idx}:** {ev['metadata']['source']} (Page {ev['metadata']['page']})  
+                    **Confidence score:** `{sim * 100:.1f}%`  
+                    ```text
+                    {ev['document']}
+                    ```
+                    """)
 
     # Append assistant response to local state
     st.session_state.messages.append(
         {
             "role": "assistant",
             "content": response["answer"],
-            "sources": response["sources"],
-            "is_html": response.get("is_html", False)
+            "sources": response.get("sources", []),
+            "is_html": response.get("is_html", False),
+            "confidence": response.get("confidence"),
+            "evidence": response.get("evidence")
         }
     )
 
