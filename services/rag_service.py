@@ -149,6 +149,7 @@ Rules:
    - **Time/Date Ranges**: Determining if a specific time or day falls within a stated range (e.g., if open '9 AM to 5 PM', a request at '6 PM' is outside hours).
    - **Negations & Contrasts**: Deducing the inverse when directly implied (e.g., if 'non-refundable once booked', it means you cannot get your money back after booking).
    - **Direct Conditionals**: Applying stated 'if/then' rules to the facts mentioned in the question (e.g., if a ticket is lost, entry is denied).
+   - **Prohibitions & Allowances**: If the user asks where, when, or under what conditions something is allowed, but the evidence logically rules it out entirely (e.g., asking where a 12-year-old can enter without a ticket when the policy states individuals 5+ must hold a ticket), explicitly state that it is **not permitted** under the rules, rather than returning the default 'could not find' refusal.
 3. **No Speculation**: If the evidence does not contain the answer and it cannot be directly and unambiguously deduced from the text using the principles above, respond exactly:
 "{self.NOT_FOUND}"
 4. **Professional Presentation**:
