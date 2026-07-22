@@ -28,19 +28,20 @@ class EmbeddingService:
             os.getenv("LLM_API_KEY", "sk-h4SzToxOqOneSAXq191PXA")
         )
         configured_model = os.getenv("EMBEDDING_MODEL")
-        # Defensive fallback: if the model is still set to the Google Gemini model name,
-        # but we are using an OpenAI compatible proxy client (such as GenAILab),
-        # automatically fall back to the correct OpenAI embedding model to prevent 404 errors.
-        if not configured_model or configured_model == "gemini-embedding-001":
-            if "google" not in self.base_url.lower():
-                if "api.openai.com" in self.base_url.lower():
-                    self.model = "text-embedding-3-small"
-                else:
-                    self.model = "azure_ai/genailab-maas-text-embedding-3-small"
+        if configured_model:
+            # Only map gemini-embedding-001 to text-embedding-3-small if pointing to public OpenAI endpoint
+            if configured_model == "gemini-embedding-001" and "api.openai.com" in self.base_url.lower():
+                self.model = "text-embedding-3-small"
+            else:
+                self.model = configured_model
+        else:
+            # Default fallback when no model is configured in .env
+            if "api.openai.com" in self.base_url.lower():
+                self.model = "text-embedding-3-small"
+            elif "genailab" in self.base_url.lower():
+                self.model = "azure_ai/genailab-maas-text-embedding-3-small"
             else:
                 self.model = "gemini-embedding-001"
-        else:
-            self.model = configured_model
 
         # Initialize the OpenAI client
         self.client = OpenAI(
