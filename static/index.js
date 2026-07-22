@@ -1,6 +1,4 @@
-import addOnUISdk from "https://new.express.adobe.com/static/add-on-sdk/sdk.js";
-
-const API_BASE_URL = "http://localhost:8000";
+// AeroQA Grounded Assistant Frontend Logic
 
 // State variables
 let threadId = localStorage.getItem("aeroqa_thread_id") || generateUUID();
@@ -15,7 +13,6 @@ function generateUUID() {
 }
 
 // UI Elements
-let clickMeButton;
 let queryInput;
 let btnSend;
 let chatMessages;
@@ -28,7 +25,8 @@ let sidebarErrorContainer;
 let btnNewChat;
 let btnResetDb;
 
-async function initializeApp() {
+// Initialize app directly on page load
+function initializeApp() {
     // Retrieve DOM Elements
     queryInput = document.getElementById("query-input");
     btnSend = document.getElementById("btn-send");
@@ -43,7 +41,7 @@ async function initializeApp() {
     btnResetDb = document.getElementById("btn-reset-db");
 
     // Check backend connection and initial status
-    await checkBackendConnection();
+    checkBackendConnection();
 
     // Register Event Listeners
     btnSend.addEventListener("click", handleSendQuery);
@@ -74,7 +72,7 @@ async function initializeApp() {
                 const formData = new FormData();
                 formData.append("knowledge_base_id", knowledgeBaseId);
 
-                const response = await fetch(`${API_BASE_URL}/reset`, {
+                const response = await fetch(`/reset`, {
                     method: "POST",
                     body: formData
                 });
@@ -95,27 +93,19 @@ async function initializeApp() {
             }
         }
     });
-}
 
-// Check if running inside Adobe Express iframe or standalone browser tab
-const isInsideIframe = window.self !== window.top;
-if (isInsideIframe) {
-    addOnUISdk.ready.then(async () => {
-        console.log("addOnUISdk is ready for use.");
-        await initializeApp();
-    });
-} else {
-    console.log("Running in standalone local web browser mode.");
-    if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", initializeApp);
-    } else {
-        initializeApp();
-    }
+    // Delegate onclick function to window for dynamically generated expanders
+    window.toggleEvidencePanel = (panelId) => {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+            panel.classList.toggle('expanded');
+        }
+    };
 }
 
 async function checkBackendConnection() {
     try {
-        const response = await fetch(`${API_BASE_URL}/documents?knowledge_base_id=${knowledgeBaseId}`);
+        const response = await fetch(`/documents?knowledge_base_id=${knowledgeBaseId}`);
         if (response.ok) {
             // Enable UI controls
             queryInput.disabled = false;
@@ -136,15 +126,14 @@ function showConnectionError() {
     sidebarErrorContainer.innerHTML = `
         <div class="error-card">
             <strong>Backend Connection Failed</strong><br>
-            Please start the Python API server by running:<br>
-            <code style="background: rgba(0,0,0,0.3); padding: 2px 4px; border-radius: 4px; display: inline-block; margin-top: 5px;">python server.py</code>
+            Please make sure the Python server is running.
         </div>
     `;
 }
 
 async function refreshDocuments() {
     try {
-        const response = await fetch(`${API_BASE_URL}/documents?knowledge_base_id=${knowledgeBaseId}`);
+        const response = await fetch(`/documents?knowledge_base_id=${knowledgeBaseId}`);
         if (response.ok) {
             const data = await response.json();
             
@@ -185,7 +174,7 @@ async function handleFileUpload(event) {
         formData.append("knowledge_base_id", knowledgeBaseId);
         formData.append("file", file);
 
-        const response = await fetch(`${API_BASE_URL}/upload`, {
+        const response = await fetch(`/upload`, {
             method: "POST",
             body: formData
         });
@@ -242,7 +231,7 @@ async function handleSendQuery() {
     indicator.style.display = "flex";
 
     try {
-        const response = await fetch(`${API_BASE_URL}/query`, {
+        const response = await fetch(`/query`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -313,7 +302,7 @@ function renderAssistantBubble(data) {
 
         evidenceHTML = `
             <div class="evidence-expander">
-                <div class="evidence-header" onclick="document.getElementById('${evidencePanelId}').classList.toggle('expanded')">
+                <div class="evidence-header" onclick="window.toggleEvidencePanel('${evidencePanelId}')">
                     <span>🔍 Grounding Evidence (${data.evidence.length} sources)</span>
                     <span>▼</span>
                 </div>
@@ -345,10 +334,17 @@ function escapeHTML(text) {
 }
 
 function formatMarkdown(text) {
-    // Simple bold markdown conversion (**bold**)
+    // Simple bold/italic markdown conversion
     let formatted = escapeHTML(text)
         .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
         .replace(/\*(.*?)\*/g, "<em>$1</em>")
         .replace(/\n/g, "<br>");
     return formatted;
+}
+
+// Run initializer directly
+if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initializeApp);
+} else {
+    initializeApp();
 }
