@@ -1,6 +1,6 @@
 # 📚 Factual-ai
 
-A production-grade, dark-themed Retrieval-Augmented Generation (RAG) and conversational assistant. Built with **Streamlit**, **LangGraph**, **ChromaDB**, **Gemini Embeddings**, and **DeepSeek-V3**, Factual-ai provides secure, isolated document ingestion, semantic search, and structured fallback chitchat.
+A production-grade, dark-themed Retrieval-Augmented Generation (RAG) and conversational assistant. Built with **FastAPI**, **LangGraph**, **ChromaDB**, **OpenAI-compatible Embeddings**, and **DeepSeek-V3**, Factual-ai provides secure, isolated document ingestion, semantic search, and structured fallback chitchat.
 
 ---
 
@@ -28,7 +28,8 @@ graph TD
 
 ## 🛠️ Tech Stack
 
-- **Frontend UI**: [Streamlit](https://streamlit.io/) (enhanced dark-theme, responsive cards, interactive state metrics)
+- **Frontend UI**: HTML5, Vanilla CSS3 (modern glassmorphism dark theme), and Vanilla JavaScript
+- **Backend Framework**: [FastAPI](https://fastapi.tiangolo.com/) & [Uvicorn](https://www.uvicorn.org/) (Python asynchronous web server)
 - **Agent Orchestration**: [LangGraph](https://langchain-ai.github.io/langgraph/) (state graphs with `InMemorySaver` memory checkpointing)
 - **Vector DB**: [ChromaDB](https://www.trychroma.com/) (using Cosine similarity space metric)
 - **Embedding API**: OpenAI-compatible Embeddings API (such as GenAILab, OpenAI, or Groq)
@@ -43,9 +44,10 @@ graph TD
 Factual-ai/
 ├── .env                  # Environment secrets configuration
 ├── .gitignore            # Git exclusion patterns
-├── app.py                # Main Streamlit web application
+├── app.py                # Main FastAPI backend web server and entry point
 ├── requirements.txt      # Project library dependencies
 ├── chroma_db/            # Local persistent Chroma vector store (git ignored)
+├── static/               # Standalone custom webpage UI frontend (index.html, index.js)
 ├── services/             # Core business logic layer
 │   ├── chroma_service.py              # Chroma database operations & schemas
 │   ├── chunk_service.py               # Text chunking & page tracking
