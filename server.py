@@ -42,6 +42,20 @@ class QueryRequest(BaseModel):
     thread_id: str
     knowledge_base_id: str
 
+@app.get("/")
+async def root():
+    return {
+        "status": "online",
+        "message": "Factual-ai Backend API is running.",
+        "endpoints": {
+            "docs": "/docs",
+            "query": "/query",
+            "documents": "/documents",
+            "upload": "/upload",
+            "reset": "/reset"
+        }
+    }
+
 @app.post("/query")
 async def run_query(payload: QueryRequest):
     try:
