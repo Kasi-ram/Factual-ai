@@ -106,22 +106,17 @@ pip install -r requirements.txt
 
 ## 🏃 Running the Application
 
-Factual-ai features a dual-system architecture: a premium custom webpage UI built as an Adobe Creative Cloud Web Add-on, and a robust FastAPI backend server.
+Factual-ai is now a unified single-server application. The Python backend hosts both the FastAPI REST endpoints and serves the beautiful premium web dashboard locally.
 
-### 1. Start the Python REST API Backend
-Start the FastAPI server locally on port 8000:
+### Start the Application Server
+Run the unified Python server locally:
 ```bash
-python server.py
+python app.py
 ```
-The API documentation is available at `http://127.0.0.1:8000/docs`.
 
-### 2. Run the Custom Webpage UI (Adobe CCWeb Add-on)
-Navigate to the `airline-addon` directory and run the local development server:
-```bash
-cd airline-addon
-npm run start
-```
-This runs the add-on UI server locally. You can sideload it inside Adobe Express by following the sideload URL provided in the console (typically `https://localhost:5241/` or through the Adobe Developer panel).
+### Access the UI and API Docs
+* **Web Dashboard**: Open your browser and navigate to **`http://localhost:8000/`** (or `http://127.0.0.1:8000/`) to interact with the grounded Airline Assistant UI.
+* **Interactive API Documentation**: Navigate to **`http://localhost:8000/docs`** to view and test backend endpoints via the Swagger UI.
 
 ---
 
