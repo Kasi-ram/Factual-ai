@@ -106,11 +106,22 @@ pip install -r requirements.txt
 
 ## 🏃 Running the Application
 
-Start the Streamlit application server locally:
+Factual-ai features a dual-system architecture: a premium custom webpage UI built as an Adobe Creative Cloud Web Add-on, and a robust FastAPI backend server.
+
+### 1. Start the Python REST API Backend
+Start the FastAPI server locally on port 8000:
 ```bash
-streamlit run app.py
+python server.py
 ```
-Open your browser and navigate to the local address (typically `http://localhost:8501`).
+The API documentation is available at `http://127.0.0.1:8000/docs`.
+
+### 2. Run the Custom Webpage UI (Adobe CCWeb Add-on)
+Navigate to the `airline-addon` directory and run the local development server:
+```bash
+cd airline-addon
+npm run start
+```
+This runs the add-on UI server locally. You can sideload it inside Adobe Express by following the sideload URL provided in the console (typically `https://localhost:5241/` or through the Adobe Developer panel).
 
 ---
 

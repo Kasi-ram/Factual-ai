@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="description" content="Airline grounded Q&A and documentation assistant add-on." />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AeroQA: Airline Knowledge Assistant</title>
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet" />
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --panel-bg: rgba(17, 24, 39, 0.7);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --accent-primary: #3b82f6; /* Royal Blue */
+            --accent-secondary: #06b6d4; /* Neon Cyan */
+            --text-main: #f8fafc;
+            --text-secondary: #94a3b8;
+            --shadow-glow: 0 0 15px rgba(59, 130, 246, 0.2);
+            --radius-main: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            background-image: radial-gradient(circle at 10% 20%, rgba(59, 130, 246, 0.05) 0%, transparent 40%),
+                              radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.05) 0%, transparent 40%);
+        }
+
+        /* Header Style */
+        header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px 24px;
+            background-color: rgba(15, 23, 42, 0.6);
+            border-bottom: 1px solid var(--border-color);
+            backdrop-filter: blur(8px);
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 24px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .logo-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-tagline {
+            font-size: 11px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+        }
+
+        /* Dashboard Grid Layout */
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            flex: 1;
+            overflow: hidden;
+            height: calc(100vh - 65px);
+        }
+
+        /* Sidebar Styling */
+        .sidebar {
+            background-color: rgba(15, 23, 42, 0.4);
+            border-right: 1px solid var(--border-color);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            backdrop-filter: blur(12px);
+        }
+
+        .sidebar-section {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+
+        /* File Upload Area */
+        .upload-zone {
+            border: 2px dashed rgba(59, 130, 246, 0.3);
+            border-radius: var(--radius-main);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background-color: rgba(255, 255, 255, 0.02);
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--accent-secondary);
+            background-color: rgba(6, 182, 212, 0.03);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        .upload-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+            display: inline-block;
+        }
+
+        .upload-text {
+            font-size: 12px;
+            color: var(--text-main);
+            font-weight: 500;
+        }
+
+        .upload-subtext {
+            font-size: 10px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        /* File list */
+        .doc-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .doc-card {
+            padding: 10px 12px;
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 12px;
+            transition: background-color 0.2s;
+        }
+
+        .doc-card:hover {
+            background-color: rgba(255, 255, 255, 0.06);
+        }
+
+        .doc-name {
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+        }
+
+        .doc-meta {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+
+        /* Active Chat Workspace */
+        .chat-area {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Messages area */
+        .messages-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            scroll-behavior: smooth;
+        }
+
+        /* Chat bubbles */
+        .message-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .message-row.user {
+            justify-content: flex-end;
+        }
+
+        .message-row.assistant {
+            justify-content: flex-start;
+        }
+
+        .bubble {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: var(--radius-main);
+            line-height: 1.5;
+            font-size: 13.5px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .message-row.user .bubble {
+            background: linear-gradient(135deg, var(--accent-primary), #2563eb);
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-row.assistant .bubble {
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-bottom-left-radius: 4px;
+            backdrop-filter: blur(8px);
+        }
+
+        /* Confidence Badges */
+        .confidence-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 20px;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+            width: fit-content;
+        }
+
+        .confidence-badge.high {
+            background-color: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .confidence-badge.medium {
+            background-color: rgba(234, 179, 8, 0.1);
+            color: #eab308;
+            border: 1px solid rgba(234, 179, 8, 0.2);
+        }
+
+        .confidence-badge.low {
+            background-color: rgba(239, 68, 68, 0.1);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        /* Evidence Panel (Accordion Style) */
+        .evidence-expander {
+            margin-top: 12px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 10px;
+        }
+
+        .evidence-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            font-size: 11.5px;
+            color: var(--text-secondary);
+            font-weight: 600;
+            user-select: none;
+            transition: color 0.2s;
+        }
+
+        .evidence-header:hover {
+            color: var(--text-main);
+        }
+
+        .evidence-body {
+            display: none;
+            margin-top: 10px;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .evidence-body.expanded {
+            display: flex;
+        }
+
+        .evidence-item {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 10px;
+            font-size: 11px;
+        }
+
+        .evidence-meta {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .evidence-text {
+            color: #cbd5e1;
+            font-family: monospace;
+            background-color: rgba(0, 0, 0, 0.2);
+            padding: 6px 8px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            font-size: 10.5px;
+            max-height: 120px;
+            overflow-y: auto;
+        }
+
+        /* Chat Input Area */
+        .input-container {
+            padding: 20px 24px;
+            background-color: rgba(15, 23, 42, 0.5);
+            border-top: 1px solid var(--border-color);
+            backdrop-filter: blur(12px);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex: 1;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 12px 16px;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-size: 13.5px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .chat-input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .btn {
+            background-color: var(--accent-primary);
+            color: #ffffff;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 20px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover:not([disabled]) {
+            background-color: #2563eb;
+            transform: translateY(-1px);
+        }
+
+        .btn:disabled {
+            background-color: #334155;
+            color: #64748b;
+            cursor: not-allowed;
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 8px 12px;
+            font-size: 11px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            width: fit-content;
+            margin-bottom: 12px;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--text-secondary);
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1.0); }
+        }
+
+        /* Error cards */
+        .error-card {
+            background-color: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #fca5a5;
+            border-radius: 12px;
+            padding: 16px;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+
+        /* Responsive stats layout */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-box {
+            background-color: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--accent-secondary);
+        }
+
+        .stat-label {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="logo-section">
+            <span class="logo-icon">✈</span>
+            <span class="logo-title">AeroQA</span>
+            <span class="logo-tagline">Grounded Airline Assistant</span>
+        </div>
+        <div>
+            <button id="btn-new-chat" class="btn-outline">🔄 New Chat</button>
+            <button id="btn-reset-db" class="btn-outline" style="color: #f87171; border-color: rgba(248, 113, 113, 0.2);">⚠️ Reset DB</button>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar Document Management Panel -->
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <span class="section-title">Upload Airline Documents</span>
+                <label for="file-input" class="upload-zone" id="drop-zone">
+                    <span class="upload-icon">📤</span>
+                    <p class="upload-text">Select Document File</p>
+                    <p class="upload-subtext">PDF, TXT, MD, CSV, JSON</p>
+                    <input type="file" id="file-input" accept=".pdf,.txt,.md,.csv,.json,.html" />
+                </label>
+            </div>
+
+            <div class="sidebar-section">
+                <span class="section-title">Session Statistics</span>
+                <div class="stats-grid">
+                    <div class="stat-box">
+                        <p class="stat-value" id="stat-docs">0</p>
+                        <p class="stat-label">Documents</p>
+                    </div>
+                    <div class="stat-box">
+                        <p class="stat-value" id="stat-chunks">0</p>
+                        <p class="stat-label">Vector Chunks</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <span class="section-title">Uploaded Files</span>
+                <div class="doc-list" id="uploaded-doc-list">
+                    <!-- Dynamic doc list goes here -->
+                </div>
+            </div>
+            
+            <div id="sidebar-error-container"></div>
+        </div>
+
+        <!-- Chat Workspace Area -->
+        <div class="chat-area">
+            <div class="messages-container" id="chat-messages">
+                <!-- Welcome greeting bubble -->
+                <div class="message-row assistant">
+                    <div class="bubble">
+                        Welcome to <strong>AeroQA Airline Grounded Assistant</strong>. 🛫  
+                        Please upload your airline manuals, ticket policies, or schedules on the sidebar panel, and ask questions grounded strictly in the reference data!
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing indicator -->
+            <div style="padding: 0 24px;">
+                <div class="typing-indicator" id="indicator">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            </div>
+
+            <!-- Chat Input Area -->
+            <div class="input-container">
+                <input type="text" id="query-input" class="chat-input" placeholder="Ask a question grounded in your manuals..." disabled />
+                <button id="btn-send" class="btn" disabled>Send</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Adobe CCWeb SDK connection scripts -->
+    <script type="module" src="add-on-console-override.js"></script>
+    <script type="module" src="index.js"></script>
+</body>
+</html>
