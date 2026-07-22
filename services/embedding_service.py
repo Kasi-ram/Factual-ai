@@ -1,27 +1,42 @@
 """
 Embedding Service for Factual-ai
 =================================
-This service interacts with the Google Gemini API to generate semantic vector embeddings
-for text chunks. It uses the configured Gemini API key and model (default: gemini-embedding-001).
+This service interacts with an OpenAI-compatible text embedding API (such as GenAILab, 
+OpenAI, or Groq) to generate semantic vector embeddings for text chunks.
 """
 
 import os
-from google import genai
+import httpx
+from openai import OpenAI
 
 class EmbeddingService:
     """
-    Service wrapper for Google's Gemini text embedding API.
+    Service wrapper for OpenAI-compatible text embedding APIs.
     """
 
     def __init__(self):
-        # Initialize Google GenAI client using Gemini API key
-        self.client = genai.Client(
-            api_key=os.getenv("GEMINI_API_KEY")
+        # Configure client to bypass SSL verify similar to LLMService
+        self.http_client = httpx.Client(verify=False)
+        
+        # Read API key, base URL, and model from environment variables, falling back to LLM values or defaults
+        self.base_url = os.getenv(
+            "EMBEDDING_BASE_URL",
+            os.getenv("LLM_BASE_URL", "https://genailab.tcs.in")
         )
-        # Configure embedding model, default to gemini-embedding-001
+        self.api_key = os.getenv(
+            "EMBEDDING_API_KEY",
+            os.getenv("LLM_API_KEY", "sk-h4SzToxOqOneSAXq191PXA")
+        )
         self.model = os.getenv(
             "EMBEDDING_MODEL",
-            "gemini-embedding-001"
+            "azure_ai/genailab-maas-text-embedding-3-small"
+        )
+
+        # Initialize the OpenAI client
+        self.client = OpenAI(
+            base_url=self.base_url,
+            api_key=self.api_key,
+            http_client=self.http_client
         )
 
     def embed(self, text: str) -> list:
@@ -37,11 +52,11 @@ class EmbeddingService:
         if not text or not text.strip():
             raise ValueError("Embedding text cannot be empty.")
 
-        # Request vector embedding
-        response = self.client.models.embed_content(
+        # Request vector embedding using standard OpenAI embeddings interface
+        response = self.client.embeddings.create(
             model=self.model,
-            contents=text
+            input=text
         )
 
         # Return the raw list of floats
-        return response.embeddings[0].values
+        return response.data[0].embedding
