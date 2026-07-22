@@ -28,9 +28,7 @@ let sidebarErrorContainer;
 let btnNewChat;
 let btnResetDb;
 
-addOnUISdk.ready.then(async () => {
-    console.log("addOnUISdk is ready for use.");
-
+async function initializeApp() {
     // Retrieve DOM Elements
     queryInput = document.getElementById("query-input");
     btnSend = document.getElementById("btn-send");
@@ -97,7 +95,23 @@ addOnUISdk.ready.then(async () => {
             }
         }
     });
-});
+}
+
+// Check if running inside Adobe Express iframe or standalone browser tab
+const isInsideIframe = window.self !== window.top;
+if (isInsideIframe) {
+    addOnUISdk.ready.then(async () => {
+        console.log("addOnUISdk is ready for use.");
+        await initializeApp();
+    });
+} else {
+    console.log("Running in standalone local web browser mode.");
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", initializeApp);
+    } else {
+        initializeApp();
+    }
+}
 
 async function checkBackendConnection() {
     try {
