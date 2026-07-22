@@ -1,53 +1,27 @@
 """
 Embedding Service for Factual-ai
 =================================
-This service interacts with an OpenAI-compatible text embedding API (such as GenAILab, 
-OpenAI, or Groq) to generate semantic vector embeddings for text chunks.
+This service interacts with the Google Gemini API to generate semantic vector embeddings
+for text chunks. It uses the configured Gemini API key and model (default: gemini-embedding-001).
 """
 
 import os
-import httpx
-from openai import OpenAI
+from google import genai
 
 class EmbeddingService:
     """
-    Service wrapper for OpenAI-compatible text embedding APIs.
+    Service wrapper for Google's Gemini text embedding API.
     """
 
     def __init__(self):
-        # Configure client to bypass SSL verify similar to LLMService
-        self.http_client = httpx.Client(verify=False)
-        
-        # Read API key, base URL, and model from environment variables, falling back to LLM values or defaults
-        self.base_url = os.getenv(
-            "EMBEDDING_BASE_URL",
-            os.getenv("LLM_BASE_URL", "https://genailab.tcs.in")
+        # Initialize Google GenAI client using Gemini API key
+        self.client = genai.Client(
+            api_key=os.getenv("GEMINI_API_KEY")
         )
-        self.api_key = os.getenv(
-            "EMBEDDING_API_KEY",
-            os.getenv("LLM_API_KEY", "sk-h4SzToxOqOneSAXq191PXA")
-        )
-        configured_model = os.getenv("EMBEDDING_MODEL")
-        if configured_model:
-            # Only map gemini-embedding-001 to text-embedding-3-small if pointing to public OpenAI endpoint
-            if configured_model == "gemini-embedding-001" and "api.openai.com" in self.base_url.lower():
-                self.model = "text-embedding-3-small"
-            else:
-                self.model = configured_model
-        else:
-            # Default fallback when no model is configured in .env
-            if "api.openai.com" in self.base_url.lower():
-                self.model = "text-embedding-3-small"
-            elif "genailab" in self.base_url.lower():
-                self.model = "azure_ai/genailab-maas-text-embedding-3-small"
-            else:
-                self.model = "gemini-embedding-001"
-
-        # Initialize the OpenAI client
-        self.client = OpenAI(
-            base_url=self.base_url,
-            api_key=self.api_key,
-            http_client=self.http_client
+        # Configure embedding model, default to gemini-embedding-001
+        self.model = os.getenv(
+            "EMBEDDING_MODEL",
+            "gemini-embedding-001"
         )
 
     def embed(self, text: str) -> list:
@@ -63,12 +37,11 @@ class EmbeddingService:
         if not text or not text.strip():
             raise ValueError("Embedding text cannot be empty.")
 
-        # Request vector embedding using standard OpenAI embeddings interface
-        response = self.client.embeddings.create(
+        # Request vector embedding
+        response = self.client.models.embed_content(
             model=self.model,
-            input=text
+            contents=text
         )
 
         # Return the raw list of floats
-        return response.data[0].embedding
-
+        return response.embeddings[0].values
